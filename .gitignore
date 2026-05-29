@@ -1,0 +1,7 @@
+build/
+*.o
+*.so
+*.EFI
+*.img
+.DS_Store
+__pycache__/
