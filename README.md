@@ -27,7 +27,7 @@ A minimal desktop operating system that runs as a native ARM64 UEFI application 
 ```bash
 # Build
 cd Tiny-OS
-make
+make clean && make
 
 # Create disk image (for file persistence)
 make image

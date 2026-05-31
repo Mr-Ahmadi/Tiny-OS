@@ -417,7 +417,7 @@ static void get_app_rect(window_type_t type, int *x, int *y, int *w, int *h)
         case WT_TERMINAL:    *w = 500; *h = 280; break;
         case WT_NOTEPAD:     *w = 500; *h = 360; break;
         case WT_FILE_VIEWER: *w = 380; *h = 300; break;
-        case WT_SNAKE:       *w = 540; *h = 440; break;
+        case WT_SNAKE:       *w = 400; *h = 340; break;
         case WT_PONG:        *w = 560; *h = 400; break;
         default:             *w = 400; *h = 220; break;
     }

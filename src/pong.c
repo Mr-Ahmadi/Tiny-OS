@@ -58,8 +58,13 @@ void pong_update(window_t *win)
     if (paddle_h < 40) paddle_h = 40;
     if (paddle_h > 100) paddle_h = 100;
     int paddle_w = 8;
+    int paddle_off = 2;
 
     int cx = win->client_x, cy = win->client_y;
+
+    p->left_y = g_input.mouse_y - cy - paddle_h / 2;
+    if (p->left_y < 0) p->left_y = 0;
+    if (p->left_y + paddle_h > ch) p->left_y = ch - paddle_h;
 
     p->ball_x += p->ball_dx;
     p->ball_y += p->ball_dy;
@@ -67,9 +72,9 @@ void pong_update(window_t *win)
     if (p->ball_y <= 0) { p->ball_y = 0; p->ball_dy = -p->ball_dy; }
     if (p->ball_y + 8 >= ch) { p->ball_y = ch - 8; p->ball_dy = -p->ball_dy; }
 
-    if (p->ball_x <= paddle_w) {
+    if (p->ball_x <= paddle_off + paddle_w) {
         if (p->ball_y + 8 >= p->left_y && p->ball_y <= p->left_y + paddle_h) {
-            p->ball_x = paddle_w + 1;
+            p->ball_x = paddle_off + paddle_w + 1;
             p->ball_dx = -p->ball_dx;
             int hit_pos = (p->ball_y + 4 - p->left_y) - paddle_h / 2;
             p->ball_dy = hit_pos / 10;
@@ -88,9 +93,9 @@ void pong_update(window_t *win)
         }
     }
 
-    if (p->ball_x + 8 >= cw - paddle_w) {
+    if (p->ball_x + 8 >= cw - paddle_w - paddle_off) {
         if (p->ball_y + 8 >= p->right_y && p->ball_y <= p->right_y + paddle_h) {
-            p->ball_x = cw - paddle_w - 9;
+            p->ball_x = cw - paddle_w - paddle_off - 9;
             p->ball_dx = -p->ball_dx;
             int hit_pos = (p->ball_y + 4 - p->right_y) - paddle_h / 2;
             p->ball_dy = hit_pos / 10;
@@ -109,9 +114,31 @@ void pong_update(window_t *win)
         }
     }
 
+    if (p->ball_x < 0) {
+        p->right_score++;
+        p->ball_x = cw / 2;
+        p->ball_y = ch / 2;
+        int seed = p->right_score * 17 + p->left_score * 31 + 2;
+        p->ball_dx = (seed % 2) ? -3 : 3;
+        p->ball_dy = ((seed / 2) % 5) - 2;
+        if (p->ball_dy == 0) p->ball_dy = 1;
+        p->serve_pause = 30;
+    }
+
+    if (p->ball_x + 8 > cw) {
+        p->left_score++;
+        p->ball_x = cw / 2;
+        p->ball_y = ch / 2;
+        int seed = p->right_score * 17 + p->left_score * 31 + 3;
+        p->ball_dx = (seed % 2) ? -3 : 3;
+        p->ball_dy = ((seed / 2) % 5) - 2;
+        if (p->ball_dy == 0) p->ball_dy = 1;
+        p->serve_pause = 30;
+    }
+
     int target_y = p->ball_y - paddle_h / 2 + 4;
-    if (p->right_y < target_y) p->right_y += 2;
-    if (p->right_y > target_y) p->right_y -= 2;
+    if (p->right_y < target_y) p->right_y += 1;
+    if (p->right_y > target_y) p->right_y -= 1;
 
     if (p->right_y < 0) p->right_y = 0;
     if (p->right_y + paddle_h > ch) p->right_y = ch - paddle_h;
@@ -134,9 +161,6 @@ void pong_draw(window_t *win, int is_active)
     if (paddle_h > 100) paddle_h = 100;
     int paddle_w = 8;
 
-    if (p->left_y < 0) p->left_y = 0;
-    if (p->left_y + paddle_h > ch) p->left_y = ch - paddle_h;
-
     p->left_y = g_input.mouse_y - cy - paddle_h / 2;
     if (p->left_y < 0) p->left_y = 0;
     if (p->left_y + paddle_h > ch) p->left_y = ch - paddle_h;
@@ -150,31 +174,45 @@ void pong_draw(window_t *win, int is_active)
 
     fb_fill_rect(cx + p->ball_x, cy + p->ball_y, 8, 8, c(240, 240, 245));
 
-    char buf[24];
-    int bi = 0;
-    int sc = p->left_score;
-    char rv[4]; int ri = 0;
-    if (sc == 0) rv[ri++] = '0';
-    while (sc > 0) { rv[ri++] = '0' + sc % 10; sc /= 10; }
-    for (int i = ri-1; i >= 0; i--) buf[bi++] = rv[i];
-    buf[bi++] = ' ';
-    buf[bi++] = '-';
-    buf[bi++] = ' ';
-    sc = p->right_score; ri = 0;
-    if (sc == 0) rv[ri++] = '0';
-    while (sc > 0) { rv[ri++] = '0' + sc % 10; sc /= 10; }
-    for (int i = ri-1; i >= 0; i--) buf[bi++] = rv[i];
-    buf[bi] = 0;
-    int tw = 0; for (int i = 0; buf[i]; i++) tw++;
-    fb_draw_string(cx + (cw - tw * 8) / 2, cy + 4, buf, c(100, 110, 125), c(10, 10, 18));
+    {
+        char lb[6]; int li = 0;
+        int sc = p->left_score;
+        char rv[4]; int ri = 0;
+        if (sc == 0) rv[ri++] = '0';
+        while (sc > 0) { rv[ri++] = '0' + sc % 10; sc /= 10; }
+        for (int i = ri-1; i >= 0; i--) lb[li++] = rv[i];
+        lb[li] = 0;
+        fb_draw_string(cx + 20, cy + 4, lb, c(72, 180, 230), c(10, 10, 18));
+    }
+    {
+        char rb[6]; int ri = 0;
+        int sc = p->right_score;
+        char rv[4]; int rj = 0;
+        if (sc == 0) rv[rj++] = '0';
+        while (sc > 0) { rv[rj++] = '0' + sc % 10; sc /= 10; }
+        for (int i = rj-1; i >= 0; i--) rb[ri++] = rv[i];
+        rb[ri] = 0;
+        int rl = 0; for (int i = 0; rb[i]; i++) rl++;
+        fb_draw_string(cx + cw - 20 - rl * 8, cy + 4, rb, c(230, 80, 80), c(10, 10, 18));
+    }
 
     if (!p->running) {
-        const char *m = "PONG!";
+        const char *m;
+        uint32_t fg, bg;
+        if (p->left_score >= 5) {
+            m = "YOU WIN!";
+            fg = c(80, 230, 80);
+            bg = c(20, 60, 20);
+        } else {
+            m = "GAME OVER";
+            fg = c(240, 80, 80);
+            bg = c(50, 20, 20);
+        }
         int ml = 0; for (const char *pp = m; *pp; pp++) ml++;
         int tx = cx + (cw - ml * 8) / 2;
         int ty = cy + ch / 2 - 24;
-        fb_fill_rect(tx - 6, ty - 2, ml * 8 + 12, 46, c(25, 25, 40));
-        fb_draw_string(tx, ty, m, c(72, 180, 230), c(25, 25, 40));
+        fb_fill_rect(tx - 6, ty - 2, ml * 8 + 12, 46, bg);
+        fb_draw_string(tx, ty, m, fg, bg);
         const char *btn = "  Restart  ";
         int bl = 0; for (const char *p = btn; *p; p++) bl++;
         int bx = cx + (cw - bl * 8) / 2;

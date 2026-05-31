@@ -192,7 +192,7 @@ void snake_draw(window_t *win, int is_active)
     buf[bi] = 0;
     fb_draw_string(cx + 6, cy + 2, buf, c(150, 158, 170), c(18, 20, 26));
 
-    if (s->move_wait == 0) {
+    if (s->move_wait == 0 && !(s->flags & 3)) {
         const char *m = "Press a direction key to start";
         int ml = 0; for (const char *p = m; *p; p++) ml++;
         int tx = cx + (cw - ml * 8) / 2;
@@ -230,19 +230,19 @@ void snake_handle_key(window_t *win, uint8_t key)
     snake_state_t *s = S(win);
     if (s->snake_len == 0) return;
 
+    if (s->flags & 3) {
+        if (key == KEY_RETURN || key == ' ' || key == 'r') {
+            snake_init(win);
+        }
+        return;
+    }
+
     if (s->move_wait == 0) {
         switch (key) {
             case KEY_UP:    case 'w': case 'W': s->dir = 0; s->next_dir = 0; s->move_wait = 1; break;
             case KEY_RIGHT: case 'd': case 'D': s->dir = 1; s->next_dir = 1; s->move_wait = 1; break;
             case KEY_DOWN:  case 's': case 'S': s->dir = 2; s->next_dir = 2; s->move_wait = 1; break;
             case KEY_LEFT:  case 'a': case 'A': s->dir = 3; s->next_dir = 3; s->move_wait = 1; break;
-        }
-        return;
-    }
-
-    if (s->flags & 3) {
-        if (key == KEY_RETURN || key == ' ' || key == 'r') {
-            snake_init(win);
         }
         return;
     }

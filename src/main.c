@@ -4,16 +4,6 @@
 #include "desktop.h"
 #include "fs.h"
 
-static void center_rect(int w, int h, int *x, int *y)
-{
-    int sw = (int)g_fb.width;
-    int sh = (int)g_fb.height - TASKBAR_HEIGHT;
-    if (w > sw - 40) w = sw - 40;
-    if (h > sh - 20) h = sh - 20;
-    *x = (sw - w) / 2;
-    *y = (sh - h) / 2;
-}
-
 EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
 {
     EFI_GUID gop_guid = GUID_GRAPHICS_OUTPUT;
@@ -47,13 +37,6 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
     input_init(ImageHandle, SystemTable);
     fs_init(SystemTable);
     desktop_init();
-    {
-        int ax, ay;
-        center_rect(420, 220, &ax, &ay);
-        desktop_create_window(ax, ay, 420, 220, "About TinyOS", WT_ABOUT);
-        center_rect(500, 360, &ax, &ay);
-        desktop_create_window(ax, ay, 500, 360, "Notepad", WT_NOTEPAD);
-    }
 
     while (1) {
         input_poll();
