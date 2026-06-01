@@ -2,6 +2,8 @@
 
 A minimal desktop operating system that runs as a native ARM64 UEFI application (PE32+), no Linux kernel required. Boots directly on QEMU/UTM with virtio-gpu framebuffer and UART serial debug.
 
+![Screenshot](Screenshot.png)
+
 ## Features
 
 - **Native UEFI app** — single PE32+ binary, runs directly on UEFI firmware
